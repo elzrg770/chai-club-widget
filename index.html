@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chai Club Widget</title>
+<style>
+body {
+  font-family: Arial, sans-serif; padding: 20px; max-width:800px; margin:auto;
+}
+h3, h4 { text-align:center; }
+.box {
+  color:#333; padding:10px; margin:5px; border-radius:8px;
+  min-width:120px; text-align:center; font-weight:bold;
+  display:inline-block;
+}
+</style>
+</head>
+<body>
+<h3>Thank You to Our Chai Club Members!</h3>
+<div id="donorContainer"></div>
+<p style="text-align:center;margin-top:20px;">
+Your ongoing support sustains our community.<br>
+Together, we're making a difference every month.<br>
+Join today and add your name here!
+</p>
+<script>
+const tierColors={Platinum:'#e5e4e2',Gold:'#ffd700',Silver:'#c0c0c0',Bronze:'#cd7f32'};
+async function fetchDonors(){
+  const res=await fetch('https://script.google.com/macros/s/AKfycbymmWeyTR4PwAA7P6Rt8wNffE7oiGuzqPwSazKOKB-8jatWl2ECD7CinHoqy2C1Tds/exec');
+  return res.json();
+}
+function render(donors,tier){
+  let html=`<h4>${tier} Members</h4><div>`;
+  donors.forEach(name=>{
+    html+=`<div class="box" style="background:${tierColors[tier]}">${name}</div>`;
+  });
+  for(let i=0;i<3;i++)html+=`<div class="box" style="visibility:hidden;">empty</div>`;
+  html+='</div>'; return html;
+}
+async function init(){
+  const data=await fetchDonors(),tiers=['Platinum','Gold','Silver','Bronze'],c=document.getElementById('donorContainer');
+  tiers.forEach(t=>c.innerHTML+=render(data[t]||[],t));
+}
+init();
+setInterval(init,30000);
+</script>
+</body>
+</html>
