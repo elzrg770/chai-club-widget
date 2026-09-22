@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Hebrew Birthday — Chabad at F&amp;M</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F3F3FE;--card:#fff;--text:#2C3345;--muted:#6F76A0;--accent:#0A5CB8;--line:#E3E5F5;--gold:#F1AB39}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+  .wrap{max-width:620px;margin:0 auto;padding:32px 16px 56px}
+  .brand{text-align:center;color:var(--muted);font-size:14px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:16px}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 4px 18px rgba(44,51,69,.08);padding:32px 28px}
+  h1{font-size:26px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 24px}
+  .heb{font-size:34px;font-weight:700;direction:rtl;text-align:center;margin:8px 0 2px}
+  .eng{font-size:20px;font-weight:600;text-align:center;color:var(--accent);margin:0 0 24px}
+  .row{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+  .row .k{flex:0 0 46%;color:var(--muted);font-size:14px}
+  .row .v{font-weight:600}
+  .note{margin-top:24px;padding:14px 16px;background:#FFF8EA;border-left:4px solid var(--gold);border-radius:6px;font-size:15px}
+  .err{color:#B42318}
+  .foot{text-align:center;color:var(--muted);font-size:14px;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Chabad at Franklin &amp; Marshall</div>
+  <div class="card" id="card">
+    <h1 id="title">Thanks — you're on the list!</h1>
+    <p class="sub" id="sub">Here's what we found for your Hebrew birthday.</p>
+    <div id="out"></div>
+    <div class="note">This date was worked out by a computer from the birthday you entered. Please ask the Rabbi to confirm it before you count on it.</div>
+  </div>
+  <div class="foot">Questions? Email <a href="mailto:rabbi@jewishenrichment.com">rabbi@jewishenrichment.com</a></div>
+</div>
+<script>
+(function(){
+  const qs=new URLSearchParams(location.search);
+  const out=document.getElementById('out');
+  const name=(qs.get('name')||'').trim().split(/\s+/)[0];
+  if(name){document.getElementById('title').textContent='Thanks, '+name+' — you\'re on the list!';}
+  const raw=(qs.get('birthday')||'').trim();
+  const sunset=(qs.get('sunset')||'').toLowerCase();
+
+  // Accept MM-DD-YYYY, MM/DD/YYYY, YYYY-MM-DD
+  let m,y,mo,d;
+  if((m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))){y=+m[1];mo=+m[2];d=+m[3];}
+  else if((m=raw.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/))){mo=+m[1];d=+m[2];y=+m[3];}
+  if(!y||!mo||!d||mo>12||d>31){
+    out.innerHTML='<p class="err">We couldn\'t read the birthday from this page. Your signup still went through — the Rabbi will look it up.</p>';
+    document.getElementById('sub').textContent='';
+    return;
+  }
+  let birth=new Date(y,mo-1,d);
+  if(sunset.startsWith('after')) birth=new Date(birth.getTime()+86400000);
+
+  const partsOf=(dt,loc)=>{
+    const f=new Intl.DateTimeFormat(loc+'-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+    const o={};f.formatToParts(dt).forEach(p=>{if(p.type!=='literal')o[p.type]=p.value;});return o;
+  };
+  const en=partsOf(birth,'en'), he=partsOf(birth,'he');
+
+  // Gematria for Hebrew day and year
+  const G=[[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],[90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],[9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
+  function gem(n){let s='';for(const [v,l] of G){while(n>=v){ if(v===10&&(n===15||n===16)){s+=n===15?'טו':'טז';n=0;break;} s+=l;n-=v;}}
+    return s.length===1?s+'׳':s.slice(0,-1)+'״'+s.slice(-1);}
+  const hebDay=gem(+en.day), hebYear=gem((+en.year)%1000);
+  const hebLine=hebDay+' ב'+he.month.replace(/^ב/,'')+' '+hebYear;
+
+  // Find the next occurrence of this Hebrew day+month on the civil calendar
+  const today=new Date(); today.setHours(0,0,0,0);
+  const isAdar=/^Adar/.test(en.month);
+  function findNext(fromDate){
+    let exact=null, fallback=null, adarAny=null;
+    for(let i=0;i<400;i++){
+      const dt=new Date(fromDate.getTime()+i*86400000); const p=partsOf(dt,'en');
+      if(p.day===en.day){
+        if(p.month===en.month){exact=dt;break;}
+        if(isAdar && p.month==='Adar'){adarAny=adarAny||dt;}
+      }
+      // 30th of a month that only has 29 days this year -> use 1st of next month
+      if(+en.day===30 && fallback===null && p.day==='1'){
+        const prev=partsOf(new Date(dt.getTime()-86400000),'en');
+        if(prev.month===en.month && prev.day==='29') fallback=dt;
+      }
+    }
+    return exact||adarAny||fallback;
+  }
+  const next=findNext(today);
+  const fmtLong=dt=>dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const fmtShort=dt=>dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+  let rows='';
+  rows+='<div class="heb">'+hebLine+'</div>';
+  rows+='<div class="eng">'+en.day+' '+en.month+' '+en.year+'</div>';
+  rows+='<div class="row"><div class="k">Birthday you entered</div><div class="v">'+fmtLong(new Date(y,mo-1,d))+(sunset.startsWith('after')?' (after sunset)':'')+'</div></div>';
+  if(next){
+    const nextP=partsOf(next,'en');
+    // Shabbat dinner: the Friday on or before the civil date of the Hebrew birthday
+    const fri=new Date(next.getTime()); while(fri.getDay()!==5) fri.setDate(fri.getDate()-1);
+    rows+='<div class="row"><div class="k">Your next Hebrew birthday</div><div class="v">'+fmtLong(next)+'<br><span style="font-weight:400;color:var(--muted)">'+nextP.day+' '+nextP.month+' '+nextP.year+'</span></div></div>';
+    rows+='<div class="row"><div class="k">Cake night</div><div class="v">Shabbat dinner, '+fmtShort(fri)+'</div></div>';
+  }
+  out.innerHTML=rows;
+})();
+</script>
+</body>
+</html>
