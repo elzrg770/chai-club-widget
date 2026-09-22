@@ -15,13 +15,14 @@
   .card{background:var(--card);border-radius:12px;box-shadow:0 4px 18px rgba(44,51,69,.08);padding:32px 28px}
   h1{font-size:26px;margin:0 0 6px}
   .sub{color:var(--muted);margin:0 0 24px}
-  .heb{font-size:34px;font-weight:700;direction:rtl;text-align:center;margin:8px 0 2px}
-  .eng{font-size:20px;font-weight:600;text-align:center;color:var(--accent);margin:0 0 24px}
   .row{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
   .row .k{flex:0 0 46%;color:var(--muted);font-size:14px}
   .row .v{font-weight:600}
   .note{margin-top:24px;padding:14px 16px;background:#FFF8EA;border-left:4px solid var(--gold);border-radius:6px;font-size:15px}
   .err{color:#B42318}
+  h2{font-size:17px;margin:26px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .dyk{font-size:18px;line-height:1.55}
+  .dyk b{color:var(--accent)}
   .foot{text-align:center;color:var(--muted);font-size:14px;margin-top:22px}
 </style>
 </head>
@@ -30,7 +31,7 @@
   <div class="brand">Chabad at Franklin &amp; Marshall</div>
   <div class="card" id="card">
     <h1 id="title">Thanks — you're on the list!</h1>
-    <p class="sub" id="sub">Here's what we found for your Hebrew birthday.</p>
+    <p class="sub" id="sub">We'll be in touch before your birthday.</p>
     <div id="out"></div>
     <div class="note">This date was worked out by a computer from the birthday you entered. Please ask the Rabbi to confirm it before you count on it.</div>
   </div>
@@ -44,6 +45,8 @@
   if(name){document.getElementById('title').textContent='Thanks, '+name+' — you\'re on the list!';}
   const raw=(qs.get('birthday')||'').trim();
   const sunset=(qs.get('sunset')||'').toLowerCase();
+  const email=(qs.get('email')||'').trim(); const fullName=(qs.get('name')||'').trim();
+  const esc=t=>t.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   // Accept MM-DD-YYYY, MM/DD/YYYY, YYYY-MM-DD
   let m,y,mo,d;
@@ -91,19 +94,17 @@
   }
   const next=findNext(today);
   const fmtLong=dt=>dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const fmtShort=dt=>dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
 
-  let rows='';
-  rows+='<div class="heb">'+hebLine+'</div>';
-  rows+='<div class="eng">'+en.day+' '+en.month+' '+en.year+'</div>';
-  rows+='<div class="row"><div class="k">Birthday you entered</div><div class="v">'+fmtLong(new Date(y,mo-1,d))+(sunset.startsWith('after')?' (after sunset)':'')+'</div></div>';
-  if(next){
-    const nextP=partsOf(next,'en');
-    // Shabbat dinner: the Friday on or before the civil date of the Hebrew birthday
-    const fri=new Date(next.getTime()); while(fri.getDay()!==5) fri.setDate(fri.getDate()-1);
-    rows+='<div class="row"><div class="k">Your next Hebrew birthday</div><div class="v">'+fmtLong(next)+'<br><span style="font-weight:400;color:var(--muted)">'+nextP.day+' '+nextP.month+' '+nextP.year+'</span></div></div>';
-    rows+='<div class="row"><div class="k">Cake night</div><div class="v">Shabbat dinner, '+fmtShort(fri)+'</div></div>';
-  }
+  const sunsetLabel=sunset.startsWith('after')?'Yes':(sunset.startsWith('before')?'No':(sunset?'Not sure':'—'));
+  let rows='<h2>Did you know?</h2>';
+  rows+='<p class="dyk">Your Hebrew birthday is <b>'+en.day+' '+en.month+' '+en.year+'</b> <span dir="rtl">('+hebLine+')</span>';
+  if(next){ rows+=', which this coming year falls on <b>'+fmtLong(next)+'</b>.'; } else { rows+='.'; }
+  rows+='</p>';
+  rows+='<h2>Here\'s the information you entered</h2>';
+  rows+='<div class="row"><div class="k">Name</div><div class="v">'+esc(fullName||'—')+'</div></div>';
+  rows+='<div class="row"><div class="k">Email</div><div class="v">'+esc(email||'—')+'</div></div>';
+  rows+='<div class="row"><div class="k">Birthday</div><div class="v">'+fmtLong(new Date(y,mo-1,d))+'</div></div>';
+  rows+='<div class="row"><div class="k">Born after sunset</div><div class="v">'+sunsetLabel+'</div></div>';
   out.innerHTML=rows;
 })();
 </script>
