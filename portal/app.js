@@ -51,7 +51,7 @@ const foot = () => `<p class="foot">Stuck on something? WhatsApp us at <a href="
 
 function header(active) {
   const tabs = [["home", "Home"], ["packages", "Packages"], ["library", "Library"], ["shop", "Shop"], ["account", "Account"]]
-    .filter(([k]) => k !== "library" || isMember());
+    .filter(([k]) => k !== "library" || (isMember() && section("Library").length));
   return `<header><div class="wrap head">
     <a class="brand" href="#home" aria-label="Shluchim Portal home"><img src="https://yzvvqoadsrctfppdiots.supabase.co/storage/v1/object/public/thumbs/site/logo.png" alt="Grow Gelt Solutions"><span>Shluchim Portal</span></a>
     <nav class="tabs" aria-label="Portal">${tabs.map(([k, l]) => `<a href="#${k}"${k === active ? ' aria-current="page"' : ""}>${l}</a>`).join("")}</nav>
@@ -149,7 +149,7 @@ function packagesGrid(title, onlyOwned = false) {
   if (!list.length) return `<h2>${esc(title)}</h2><p class="empty">Nothing here yet.</p>`;
   return `<h2 style="font-size:24px;margin-bottom:20px">${esc(title)}</h2><div class="grid">${list.map((p) => {
     const mine = owns(p.access_key);
-    return `<div class="tile">${picture({ title: p.name }, mine ? "" : p.price_label || "")}
+    return `<div class="tile">${p.image_url ? shopCover(p) : picture({ title: p.name }, mine ? "" : p.price_label || "")}
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h3>${esc(p.name)}</h3>${mine ? `<span class="pill">Yours</span>` : ""}</div>
       ${p.description ? `<p class="desc">${esc(p.description)}</p>` : ""}
       <div style="margin-top:auto">${mine ? `<a class="btn wide" href="#package/${esc(p.access_key)}">Open package</a>`
@@ -329,7 +329,11 @@ function wire() {
     const msg = document.getElementById("billmsg"); msg.hidden = false; msg.textContent = "Opening your secure Stripe page…";
     if (DEMO) { msg.textContent = "Demo mode: this would open Stripe."; return; }
     const { data, error } = await sb.functions.invoke("billing-link", { body: { action: b.dataset.bill } });
-    if (error || !data?.url) { msg.textContent = `We couldn't open Stripe: ${error?.message || data?.error || "unknown error"}. WhatsApp us and we'll help.`; return; }
+    if (error || !data?.url) {
+      let why = data?.error || error?.message || "unknown error";
+      try { why = (await error.context.json()).error || why; } catch { /* keep the generic reason */ }
+      msg.textContent = `We couldn't open Stripe: ${why}. WhatsApp us and we'll help.`; return;
+    }
     location.href = data.url;
   });
 }
