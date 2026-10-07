@@ -196,7 +196,7 @@ function accountView() {
        <p style="margin:0 0 4px;font-size:32px;font-weight:700">${esc(amount)} <span class="meta" style="font-size:16px">per ${esc(m.mdm_interval || "month")}</span></p>
        <p class="desc">${m.mdm_cancel_at_period_end ? `Canceled. Your access stays on until ${esc(until)}.` : until ? `Next payment ${esc(until)}.` : ""}</p>
        ${m.mdm_status === "past_due" ? `<div class="notice" style="margin-top:12px">Your last payment didn&rsquo;t go through. Update your card below to keep your access.</div>` : ""}
-       ${m.mdm_interval === "month" ? act("yearly", "Switch to yearly billing", "Pay once a year instead of every month.", "Switch to yearly", "primary") : ""}
+       ${m.mdm_interval === "month" && cfg.yearlyBilling ? act("yearly", "Switch to yearly billing", "Pay once a year instead of every month.", "Switch to yearly", "primary") : ""}
        ${act("card", "Update your card", "Change the card we charge.", "Update card")}
        ${act("portal", "Receipts and billing details", "Download receipts or update your billing address.", "Open")}
        ${m.mdm_cancel_at_period_end ? "" : act("cancel", "Cancel membership", "Your access stays on until the end of the period you already paid for.", "Cancel membership", "danger")}
