@@ -252,7 +252,8 @@ function productView(slug) {
   const cta = owned ? `<a class="btn primary" href="#package/${esc(p.access_key)}">Open it in your portal</a>`
     : member && p.in_mdm ? `<p class="notice" style="margin:0">You&rsquo;re a member, so this is already included. <a class="u" href="#home">Go to your portal</a></p>`
     : p.access_key === "mdm" && member ? `<p class="notice" style="margin:0">You&rsquo;re already a member. <a class="u" href="#home">Go to your portal</a></p>`
-    : p.cta_url ? `<a class="btn primary" style="min-height:52px;font-size:17px;padding:0 28px" href="${esc(p.cta_url)}">${esc(p.cta_label || "Get it")}</a>` : "";
+    : p.cta_url ? `<a class="btn primary" style="min-height:52px;font-size:17px;padding:0 28px" href="${esc(p.cta_url)}">${esc(p.cta_label || "Get it")}</a>`
+      + (p.cta2_url ? `<a class="btn" style="min-height:48px;font-size:16px;padding:0 24px" href="${esc(p.cta2_url)}">${esc(p.cta2_label || "Other option")}</a>` : "") : "";
   return `<main><div class="wrap cols" style="padding-top:40px">
     <div class="main">
       <p class="eyebrow"><a href="#shop">Shop</a></p>
@@ -278,7 +279,7 @@ function productView(slug) {
 async function loadShop() {
   if (S.shop.length) return;
   if (DEMO) { S.shop = S.products; return; }
-  const { data } = await sb.from("products").select("access_key,name,slug,public,sort,price_label,tagline,details,includes,cta_label,cta_url,image_url,in_mdm,description,portal_package").eq("public", true).order("sort");
+  const { data } = await sb.from("products").select("access_key,name,slug,public,sort,price_label,tagline,details,includes,cta_label,cta_url,cta2_label,cta2_url,image_url,in_mdm,description,portal_package").eq("public", true).order("sort");
   S.shop = data || [];
 }
 
