@@ -5,4 +5,5 @@ window.PORTAL_CONFIG = {
   supportWhatsApp: "272-888-0770",
   supportWhatsAppLink: "https://wa.me/12728880770",
   joinUrl: "https://growgelt.com/mdm",
+  yearlyBilling: true,
 };
